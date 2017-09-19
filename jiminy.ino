@@ -1,3 +1,4 @@
+#include <Adafruit_NeoPixel.h>
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 
@@ -7,6 +8,12 @@ const char* password = "password";
 const char* mqtt_server = "mqtt";
 
 const char* my_topic = "/jiminy/c/jewel";
+
+// Init neopixels
+#define PIN 15
+#define NUM_LEDS 7
+#define BRIGHTNESS 50
+Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM_LEDS, PIN, NEO_GRBW + NEO_KHZ800);
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -26,6 +33,10 @@ void setup() {
   client.setCallback(callback);
 
   pinMode(ledPin, OUTPUT);
+  
+  pixels.setBrightness(BRIGHTNESS);
+  pixels.begin();
+  pixels.show(); // Initialize all pixels to 'off'
 }
 
 void loop() {
