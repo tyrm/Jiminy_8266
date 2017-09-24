@@ -10,8 +10,8 @@ const char* mqtt_server = "mqtt";
 const char* my_topic = "/jiminy/c/jewel";
 
 // Init neopixels
-#define PIN 15
-#define NUM_LEDS 7
+#define PIN        15
+#define NUM_LEDS   7
 #define BRIGHTNESS 50
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM_LEDS, PIN, NEO_GRBW + NEO_KHZ800);
 
@@ -23,6 +23,7 @@ const byte ledPin = 0; // Pin with LED on Adafruit Huzzah
 void setup() {
   Serial.begin(115200);
 
+  // Allow time for ESP to init
   for(uint8_t t = 4; t > 0; t--) {
     Serial.printf("[SETUP] WAIT %d...\n", t);
     Serial.flush();
@@ -47,14 +48,85 @@ void loop() {
 }
 
 void callback(char* topic, byte* payload, unsigned int length) {
+  
   Serial.print("Message arrived [");
   Serial.print(topic);
-  Serial.print("] ");
-  for (int i=0;i<length;i++) {
+  Serial.println("] ");
+
+  char command[4];
+
+  int optCount = countPipes(payload, length);
+  char options[optCount][3];
+  
+  int start = millis();
+
+  int option_index = 0;
+  int option_cur = 0;
+  bool error = false;
+  
+  for (int i=0; i<length; i++) {
     char receivedChar = (char)payload[i];
-    Serial.print(receivedChar);
+    //Serial.print(receivedChar);
+    if (i == 0){
+      if (receivedChar != '<') {
+        error = true;
+        break;
+      }
+      else {
+        Serial.print("  Received Start (");
+        Serial.print(receivedChar);
+        Serial.println(")");
+      }
+    }
+    else if (i > 0 && i < 5) {
+      Serial.print("  Received Command (");
+      Serial.print(receivedChar);
+      Serial.println(")");
+      command[i-1] = receivedChar;
+    }
+    else if (i == 5) {
+      if (receivedChar == '>') {
+        Serial.print("  Received Stop (");
+        Serial.print(receivedChar);
+        Serial.println(")");
+        break;
+      }
+      else if (receivedChar != '|') {
+        error = true;
+        break;
+      }
+    }
+    else if (i > 5) {
+      if (receivedChar == '>') {
+        Serial.print("  Received Stop (");
+        Serial.print(receivedChar);
+        Serial.println(")");
+        break;
+      }
+      else if (receivedChar == '|') {
+        option_index++;
+        option_cur = 0;
+      }
+      else {
+        
+      }
+    }
   }
+
+  int runtime = millis() - start;
   Serial.println();
+  Serial.print("Proccess Time (");
+  Serial.print(runtime);
+  Serial.println(")");
+
+  if (error) {
+    Serial.println("ERROR");
+  }
+  else {
+    Serial.print("Command: ");
+    Serial.print(command);
+    Serial.println();
+  }
 }
 
 void reconnect() {
@@ -75,5 +147,18 @@ void reconnect() {
       delay(5000);
     }
   }
+}
+
+int countPipes(byte* payload, unsigned int length) {
+  int count = 0;
+  
+  for (int i=0; i<length; i++) {
+    char receivedChar = (char)payload[i];
+    if (receivedChar == '|') {
+      count += 1;
+    }
+  }
+  
+  return count;
 }
 
