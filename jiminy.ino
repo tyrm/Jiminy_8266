@@ -2,29 +2,49 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 
-// Connect to the WiFi
 const char* ssid = "ssid";
 const char* password = "password";
 const char* mqtt_server = "mqtt";
+// WiFi Config
 
-String myName = "";
-
-// Init neopixels
+// LED Config
 #define PIN        15
 #define NUM_LEDS   7
 #define BRIGHTNESS 50
-Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM_LEDS, PIN, NEO_GRBW + NEO_KHZ800);
 
-WiFiClient espClient;
-PubSubClient client(espClient);
+// Globals
+const byte        ledPin            = 0; // Pin with LED on Adafruit Huzzah
+boolean           ledState          = false;
+String            myName            = "";
+Adafruit_NeoPixel pixels            = Adafruit_NeoPixel(NUM_LEDS, PIN, NEO_GRBW + NEO_KHZ800);
+WiFiClient        espClient;
+PubSubClient      client(espClient);
 
+// Functions
+void initPixels() {
+  pixels.setBrightness(BRIGHTNESS);
+  pixels.begin();
+  pixels.show(); // ball pixels to 'off'
+}
+
+void setPixelBuffer(byte index, byte red, byte green, byte blue) {
+  pixels.setPixelColor(index, pixels.Color(red,green,blue));
+}
+
+void writePixelBuffer() {
+  pixels.show();
+}
+
+// Core
 void setup() {
   Serial.begin(115200);
+  pinMode(ledPin, OUTPUT); 
 
   // Allow time for ESP to init
   for(uint8_t t = 4; t > 0; t--) {
     Serial.printf("[SETUP] WAIT %d...\n", t);
     Serial.flush();
+    toggleLED();
     delay(1000);
   }
   
@@ -32,10 +52,8 @@ void setup() {
 
   client.setServer(mqtt_server, 1883);
   client.setCallback(processPacket);
-  
-  pixels.setBrightness(BRIGHTNESS);
-  pixels.begin();
-  pixels.show(); // Initialize all pixels to 'off'
+
+  initPixels();
 }
 
 void loop() {
@@ -58,35 +76,82 @@ int countPipes(byte* payload, unsigned int length) {
   return count;
 }
 
-void parseCommand(char command[],char opts[][4],int optLens[]) {
-  if (String(command) == "PING") {
+String getName() {
+  byte mac[6];
+  WiFi.macAddress(mac);
+
+  return String(String(mac[5], HEX) + String(mac[4], HEX) + String(mac[3], HEX) + String(mac[2], HEX) + String(mac[1], HEX) + String(mac[0], HEX));
+}
+
+void parseCommand(char command[],char opts[][4],int optLens[], int optCount) {
+  // Toggle LED to indicate valid Packet received
+  toggleLED();
+  
+  // Make Strings
+  String commandStr = String(command);
+  String optStrs[optCount];
+  for (int i=0; i<optCount; i++) {
+    switch (optLens[i]){
+      case 1:
+        optStrs[i] = String(opts[i][0]);
+        break;
+      case 2:
+        optStrs[i] = String(String(opts[i][0]) + String(opts[i][1]));
+        break;
+      case 3:
+        optStrs[i] = String(String(opts[i][0]) + String(opts[i][1]) + String(opts[i][2]));
+        break;
+      default:
+        optStrs[i] = "";
+        break;
+    }
+  }
+
+  // Parse and Execute Command
+  if (commandStr == "PING") {
+    Serial.println("  Got PING");
     pong();
+  }
+  else if (commandStr == "SETP") {
+    if (optCount >= 4 && optCount % 3 == 1) { // check length
+      int pixCount = optCount/3;
+      Serial.print("  Got color data for ");
+      Serial.print(pixCount);
+      Serial.println(" pixels.");
+      for (byte i=0; i<pixCount; i++) {
+        int offset = i * 3;
+        setPixelBuffer(optStrs[0].toInt()+i, optStrs[offset+1].toInt(), optStrs[offset+2].toInt(), optStrs[offset+3].toInt());
+      }
+      writePixelBuffer();
+    }
   }
 }
 
 void pong() {
-  String message = String("<PONG|" + myName + ">");
-  
-  char msgBuffer[message.length() + 1];
-  message.toCharArray(msgBuffer, message.length() + 1);
+  String message = String("<PONG|" + myName + "|" + NUM_LEDS + ">");
+
+  int bufferSize = message.length() + 1;
+  char msgBuffer[bufferSize];
+  message.toCharArray(msgBuffer, bufferSize);
   
   client.publish("/jiminy/reply", msgBuffer);
 }
 
 void processPacket(char* topic, byte* payload, unsigned int length) {
+  int procStart = millis();
+  
   Serial.print("Message arrived [");
   Serial.print(topic);
   Serial.println("] ");
-
+  
   char command[5] = {'\0'};
 
   int optCount = countPipes(payload, length);
   char opts[optCount][4];
   int optLens[optCount];
-  
-
   int optionIndex = 0;
   int optionCur = 0;
+  
   bool error = false;
   
   for (int i=0; i<length; i++) {
@@ -102,7 +167,7 @@ void processPacket(char* topic, byte* payload, unsigned int length) {
     }
     else if (i == 5) {
       if (receivedChar == '>') {
-        parseCommand(command, opts, optLens);
+        parseCommand(command, opts, optLens, optCount);
         break;
       }
       else if (receivedChar != '|') {
@@ -111,9 +176,8 @@ void processPacket(char* topic, byte* payload, unsigned int length) {
       }
     }
     else if (i > 5) {
-      optionCur = 1;
       if (receivedChar == '>') {
-        parseCommand(command, opts, optLens);
+        parseCommand(command, opts, optLens, optCount);
         break;
       }
       else if (receivedChar == '|') {
@@ -121,7 +185,7 @@ void processPacket(char* topic, byte* payload, unsigned int length) {
         optionCur = 0;
       }
       else {
-        opts[optionIndex-1][optionCur] = receivedChar;
+        opts[optionIndex][optionCur] = receivedChar;
         optLens[optionIndex] = optionCur + 1;
 
         optionCur++;
@@ -132,31 +196,10 @@ void processPacket(char* topic, byte* payload, unsigned int length) {
   if (error) {
     Serial.println("ERROR");
   }
-  else {
-    // Debug
-    Serial.print("Command: ");
-    for (int i=0; i<sizeof(command); i++) {
-      Serial.print(command[i]);
-    }
-    Serial.println();
-    for (int i=0; i<optionIndex; i++) {
-      Serial.print(i);
-      Serial.print(": [");
-      for (int j=0; j<optLens[i]; j++) {
-        Serial.print(opts[i][j]);
-      }
-      Serial.println("]");
-    }
-    Serial.println(); 
-  }
 
-}
-
-String getName() {
-  byte mac[6];
-  WiFi.macAddress(mac);
-
-  return String(String(mac[5], HEX) + String(mac[4], HEX) + String(mac[3], HEX)) + String(String(mac[2], HEX) + String(mac[1], HEX) + String(mac[0], HEX));
+  Serial.print("Packet process time: ");
+  Serial.print(millis() - procStart);
+  Serial.println(" ms");
 }
 
 void reconnect() {
@@ -170,8 +213,9 @@ void reconnect() {
        client.subscribe("/jiminy/c/all");
        String myTopic = String("/jiminy/c/" + myName);
 
-       char topicBuffer[myTopic.length() + 1];
-       myTopic.toCharArray(topicBuffer, myTopic.length() + 1);
+       int bufferSize = myTopic.length() + 1;
+       char topicBuffer[bufferSize];
+       myTopic.toCharArray(topicBuffer, bufferSize);
        
        client.subscribe(topicBuffer);
     } else {
@@ -181,6 +225,17 @@ void reconnect() {
       // Wait 5 seconds before retrying
       delay(5000);
     }
+  }
+}
+
+void toggleLED() {
+  if (ledState) {
+    digitalWrite(ledPin, HIGH);
+    ledState = false;
+  }
+  else {
+    digitalWrite(ledPin, LOW);
+    ledState = true;
   }
 }
 
