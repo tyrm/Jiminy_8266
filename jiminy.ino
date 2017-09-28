@@ -27,6 +27,10 @@ void initPixels() {
   pixels.show(); // ball pixels to 'off'
 }
 
+void setPixelBrightness(byte b) {
+  pixels.setBrightness(b);
+}
+
 void setPixelBuffer(byte index, byte red, byte green, byte blue) {
   pixels.setPixelColor(index, pixels.Color(red,green,blue));
 }
@@ -131,6 +135,15 @@ void parseCommand(char command[],char opts[][4],int optLens[], int optCount) {
       for (byte i=0; i<NUM_LEDS; i++) {
         setPixelBuffer(i, optStrs[0].toInt(), optStrs[1].toInt(), optStrs[2].toInt());
       }
+      writePixelBuffer();
+    }
+  }
+  else if (commandStr == "BRIG") {
+    if (optCount == 1) { // check length
+      Serial.print("  Got brightness ");
+      Serial.print(optStrs[0]);
+      Serial.println(".");
+      setPixelBrightness(optStrs[0].toInt());
       writePixelBuffer();
     }
   }
