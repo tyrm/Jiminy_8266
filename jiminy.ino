@@ -32,7 +32,11 @@ void setPixelBrightness(byte b) {
 }
 
 void setPixelBuffer(byte index, byte red, byte green, byte blue) {
-  pixels.setPixelColor(index, pixels.Color(red,green,blue));
+  pixels.setPixelColor(index, pixels.Color(red, green, blue));
+}
+
+void setPixelBufferWhite(byte index, byte red, byte green, byte blue, byte white) {
+  pixels.setPixelColor(index, pixels.Color(red, green, blue, white));
 }
 
 void writePixelBuffer() {
@@ -134,6 +138,19 @@ void parseCommand(char command[],char opts[][4],int optLens[], int optCount) {
       Serial.println("  Got color data for all pixels.");
       for (byte i=0; i<NUM_LEDS; i++) {
         setPixelBuffer(i, optStrs[0].toInt(), optStrs[1].toInt(), optStrs[2].toInt());
+      }
+      writePixelBuffer();
+    }
+  }
+  else if (commandStr == "STPW") {
+    if (optCount >= 5 && optCount % 4 == 1) { // check length
+      int pixCount = optCount/4;
+      Serial.print("  Got color data for ");
+      Serial.print(pixCount);
+      Serial.println(" pixels.");
+      for (byte i=0; i<pixCount; i++) {
+        int offset = i * 4;
+        setPixelBufferWhite(optStrs[0].toInt()+i,optStrs[offset+1].toInt(), optStrs[offset+2].toInt(), optStrs[offset+3].toInt(), optStrs[offset+4].toInt());
       }
       writePixelBuffer();
     }
