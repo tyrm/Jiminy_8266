@@ -125,6 +125,15 @@ void parseCommand(char command[],char opts[][4],int optLens[], int optCount) {
       writePixelBuffer();
     }
   }
+  else if (commandStr == "SETA") {
+    if (optCount == 3) { // check length
+      Serial.println("  Got color data for all pixels.");
+      for (byte i=0; i<NUM_LEDS; i++) {
+        setPixelBuffer(i, optStrs[0].toInt(), optStrs[1].toInt(), optStrs[2].toInt());
+      }
+      writePixelBuffer();
+    }
+  }
 }
 
 void pong() {
@@ -200,6 +209,7 @@ void processPacket(char* topic, byte* payload, unsigned int length) {
   Serial.print("Packet process time: ");
   Serial.print(millis() - procStart);
   Serial.println(" ms");
+  Serial.println();
 }
 
 void reconnect() {
@@ -226,6 +236,9 @@ void reconnect() {
       delay(5000);
     }
   }
+
+  // Let server know we're here
+  pong();
 }
 
 void toggleLED() {
