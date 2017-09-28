@@ -145,12 +145,21 @@ void parseCommand(char command[],char opts[][4],int optLens[], int optCount) {
   else if (commandStr == "STPW") {
     if (optCount >= 5 && optCount % 4 == 1) { // check length
       int pixCount = optCount/4;
-      Serial.print("  Got color data for ");
+      Serial.print("  Got color+white data for ");
       Serial.print(pixCount);
       Serial.println(" pixels.");
       for (byte i=0; i<pixCount; i++) {
         int offset = i * 4;
         setPixelBufferWhite(optStrs[0].toInt()+i,optStrs[offset+1].toInt(), optStrs[offset+2].toInt(), optStrs[offset+3].toInt(), optStrs[offset+4].toInt());
+      }
+      writePixelBuffer();
+    }
+  }
+  else if (commandStr == "STAW") {
+    if (optCount == 4) { // check length
+      Serial.println("  Got color+white data for all pixels.");
+      for (byte i=0; i<NUM_LEDS; i++) {
+        setPixelBufferWhite(i, optStrs[0].toInt(), optStrs[1].toInt(), optStrs[2].toInt(), optStrs[3].toInt());
       }
       writePixelBuffer();
     }
