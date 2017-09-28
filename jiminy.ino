@@ -2,10 +2,10 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 
+// WiFi Config
 const char* ssid = "ssid";
 const char* password = "password";
 const char* mqtt_server = "mqtt";
-// WiFi Config
 
 // LED Config
 #define PIN        15
