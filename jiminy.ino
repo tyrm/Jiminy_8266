@@ -129,28 +129,6 @@ void parseCommand(char command[],char opts[][4],int optLens[], int optCount) {
     pong();
   }
   else if (commandStr == "SETP") {
-    if (optCount >= 4 && optCount % 3 == 1) { // check length
-      int pixCount = optCount/3;
-      Serial.print("  Got color data for ");
-      Serial.print(pixCount);
-      Serial.println(" pixels.");
-      for (byte i=0; i<pixCount; i++) {
-        int offset = i * 3;
-        setPixelBufferWhite(optStrs[0].toInt()+i, optStrs[offset+1].toInt(), optStrs[offset+2].toInt(), optStrs[offset+3].toInt(), 0);
-      }
-      writePixelBuffer();
-    }
-  }
-  else if (commandStr == "SETA") {
-    if (optCount == 3) { // check length
-      Serial.println("  Got color data for all pixels.");
-      for (byte i=0; i<NUM_LEDS; i++) {
-        setPixelBufferWhite(i, optStrs[0].toInt(), optStrs[1].toInt(), optStrs[2].toInt(), 0);
-      }
-      writePixelBuffer();
-    }
-  }
-  else if (commandStr == "STPW") {
     if (optCount >= 5 && optCount % 4 == 1) { // check length
       int pixCount = optCount/4;
       Serial.print("  Got color+white data for ");
@@ -163,7 +141,7 @@ void parseCommand(char command[],char opts[][4],int optLens[], int optCount) {
       writePixelBuffer();
     }
   }
-  else if (commandStr == "STAW") {
+  else if (commandStr == "SETA") {
     if (optCount == 4) { // check length
       Serial.println("  Got color+white data for all pixels.");
       for (byte i=0; i<NUM_LEDS; i++) {
@@ -182,22 +160,21 @@ void parseCommand(char command[],char opts[][4],int optLens[], int optCount) {
     }
   }
   else if (commandStr == "CLRS") {
-    if (optCount >= 4 && optCount <= 41 && optCount % 3 == 1) { // check length
+    if (optCount >= 5 && optCount <= 41 && optCount % 4 == 1) { // check length
       byte schemeID = optStrs[0].toInt();
-      int pixCount = optCount/3;
+      int pixCount = optCount/4;
       Serial.print("  Got color scheme ");
       Serial.print(optStrs[0]);
       Serial.println(".");
       // Store Number of Colors in Element 0
       colorScheme[schemeID][0] = pixCount;
       for (byte i=0; i<pixCount; i++) {
-        int schemeOffset = i*4;
-        int optOffset = i*3;
+        int offset = i*4;
         
-        colorScheme[schemeID][schemeOffset+1] = optStrs[optOffset+1].toInt();
-        colorScheme[schemeID][schemeOffset+2] = optStrs[optOffset+2].toInt();
-        colorScheme[schemeID][schemeOffset+3] = optStrs[optOffset+3].toInt();
-        colorScheme[schemeID][schemeOffset+4] = 0;
+        colorScheme[schemeID][offset+1] = optStrs[offset+1].toInt();
+        colorScheme[schemeID][offset+2] = optStrs[offset+2].toInt();
+        colorScheme[schemeID][offset+3] = optStrs[offset+3].toInt();
+        colorScheme[schemeID][offset+4] = optStrs[offset+4].toInt();
       }
     }
   }
