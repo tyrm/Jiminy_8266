@@ -7,21 +7,24 @@ const char* ssid = "ssid";
 const char* password = "password";
 const char* mqtt_server = "mqtt";
 
+WiFiClient   espClient;
+PubSubClient client(espClient);
+
 // LED Config
 #define PIN        15
 #define NUM_LEDS   7
 #define BRIGHTNESS 50
 
+Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM_LEDS, PIN, NEO_GRBW + NEO_KHZ800);
+
 //*********//
 // Globals //
 //*********//
-const byte        ledPin            = 0; // Pin with LED on Adafruit Huzzah
-boolean           ledState          = false;
-String            myName            = "";
-Adafruit_NeoPixel pixels            = Adafruit_NeoPixel(NUM_LEDS, PIN, NEO_GRBW + NEO_KHZ800);
-WiFiClient        espClient;
-PubSubClient      client(espClient);
 byte              colorScheme[10][41];
+const byte        ledPin              = 0; // Pin with LED on Adafruit Huzzah
+boolean           ledState            = false;
+byte              myMode              = 0;
+String            myName              = "";
 
 //***********//
 // Functions //
@@ -36,12 +39,32 @@ void setPixelBrightness(byte b) {
   pixels.setBrightness(b);
 }
 
-void setPixelBufferWhite(byte index, byte red, byte green, byte blue, byte white) {
+void setPixelBuffer(byte index, byte red, byte green, byte blue, byte white) {
   pixels.setPixelColor(index, pixels.Color(red, green, blue, white));
 }
 
 void writePixelBuffer() {
   pixels.show();
+}
+
+//**********//
+// Patterns //
+//**********//
+
+// 0 - Alternate
+void patAlternate(byte schemeID) {
+  if (colorScheme[schemeID][0] > 0) {
+    Serial.print("  Pattern: Alternating [");
+    Serial.print(schemeID);
+    Serial.println("]");
+    for (int i=0; i<NUM_LEDS; i++) {
+      int schIndex = i % colorScheme[schemeID][0];
+      int offset = schIndex * 4;
+      
+      setPixelBuffer(i, colorScheme[schemeID][offset+1], colorScheme[schemeID][offset+2], colorScheme[schemeID][offset+3], colorScheme[schemeID][offset+4]);
+    }
+    writePixelBuffer();
+  }
 }
 
 //******//
@@ -136,7 +159,7 @@ void parseCommand(char command[],char opts[][4],int optLens[], int optCount) {
       Serial.println(" pixels.");
       for (byte i=0; i<pixCount; i++) {
         int offset = i * 4;
-        setPixelBufferWhite(optStrs[0].toInt()+i,optStrs[offset+1].toInt(), optStrs[offset+2].toInt(), optStrs[offset+3].toInt(), optStrs[offset+4].toInt());
+        setPixelBuffer(optStrs[0].toInt()+i,optStrs[offset+1].toInt(), optStrs[offset+2].toInt(), optStrs[offset+3].toInt(), optStrs[offset+4].toInt());
       }
       writePixelBuffer();
     }
@@ -145,7 +168,7 @@ void parseCommand(char command[],char opts[][4],int optLens[], int optCount) {
     if (optCount == 4) { // check length
       Serial.println("  Got color+white data for all pixels.");
       for (byte i=0; i<NUM_LEDS; i++) {
-        setPixelBufferWhite(i, optStrs[0].toInt(), optStrs[1].toInt(), optStrs[2].toInt(), optStrs[3].toInt());
+        setPixelBuffer(i, optStrs[0].toInt(), optStrs[1].toInt(), optStrs[2].toInt(), optStrs[3].toInt());
       }
       writePixelBuffer();
     }
@@ -175,6 +198,14 @@ void parseCommand(char command[],char opts[][4],int optLens[], int optCount) {
         colorScheme[schemeID][offset+2] = optStrs[offset+2].toInt();
         colorScheme[schemeID][offset+3] = optStrs[offset+3].toInt();
         colorScheme[schemeID][offset+4] = optStrs[offset+4].toInt();
+      }
+    }
+  }
+  else if (commandStr == "PATS") {
+    if (optCount == 2) { // check length
+      switch (optStrs[0].toInt()) {
+        case 0:
+          patAlternate(optStrs[1].toInt());
       }
     }
   }
