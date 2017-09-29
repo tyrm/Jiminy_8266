@@ -12,15 +12,20 @@ const char* mqtt_server = "mqtt";
 #define NUM_LEDS   7
 #define BRIGHTNESS 50
 
-// Globals
+//*********//
+// Globals //
+//*********//
 const byte        ledPin            = 0; // Pin with LED on Adafruit Huzzah
 boolean           ledState          = false;
 String            myName            = "";
 Adafruit_NeoPixel pixels            = Adafruit_NeoPixel(NUM_LEDS, PIN, NEO_GRBW + NEO_KHZ800);
 WiFiClient        espClient;
 PubSubClient      client(espClient);
+byte              colorScheme[10][41];
 
-// Functions
+//***********//
+// Functions //
+//***********//
 void initPixels() {
   pixels.setBrightness(BRIGHTNESS);
   pixels.begin();
@@ -39,10 +44,17 @@ void writePixelBuffer() {
   pixels.show();
 }
 
-// Core
+//******//
+// Core //
+//******//
 void setup() {
   Serial.begin(115200);
   pinMode(ledPin, OUTPUT); 
+
+  int colorSchemeCount = sizeof(colorScheme)/sizeof(colorScheme[0]);
+  for (int i=0; i<colorSchemeCount; i++) {
+    colorScheme[i][0] = 0;
+  }
 
   // Allow time for ESP to init
   for(uint8_t t = 4; t > 0; t--) {
@@ -169,6 +181,26 @@ void parseCommand(char command[],char opts[][4],int optLens[], int optCount) {
       writePixelBuffer();
     }
   }
+  else if (commandStr == "CLRS") {
+    if (optCount >= 4 && optCount <= 41 && optCount % 3 == 1) { // check length
+      byte schemeID = optStrs[0].toInt();
+      int pixCount = optCount/3;
+      Serial.print("  Got color scheme ");
+      Serial.print(optStrs[0]);
+      Serial.println(".");
+      // Store Number of Colors in Element 0
+      colorScheme[schemeID][0] = pixCount;
+      for (byte i=0; i<pixCount; i++) {
+        int schemeOffset = i*4;
+        int optOffset = i*3;
+        
+        colorScheme[schemeID][schemeOffset+1] = optStrs[optOffset+1].toInt();
+        colorScheme[schemeID][schemeOffset+2] = optStrs[optOffset+2].toInt();
+        colorScheme[schemeID][schemeOffset+3] = optStrs[optOffset+3].toInt();
+        colorScheme[schemeID][schemeOffset+4] = 0;
+      }
+    }
+  }
 }
 
 void pong() {
@@ -195,13 +227,17 @@ void processPacket(char* topic, byte* payload, unsigned int length) {
   int optLens[optCount];
   int optionIndex = 0;
   int optionCur = 0;
-  
+
+  bool started = false;
   bool error = false;
   
   for (int i=0; i<length; i++) {
     char receivedChar = (char)payload[i];
     if (i == 0){
-      if (receivedChar != '<') {
+      if (receivedChar == '<') {
+        started = true;
+      }
+      else {
         error = true;
         break;
       }
@@ -211,7 +247,6 @@ void processPacket(char* topic, byte* payload, unsigned int length) {
     }
     else if (i == 5) {
       if (receivedChar == '>') {
-        parseCommand(command, opts, optLens, optCount);
         break;
       }
       else if (receivedChar != '|') {
@@ -221,7 +256,6 @@ void processPacket(char* topic, byte* payload, unsigned int length) {
     }
     else if (i > 5) {
       if (receivedChar == '>') {
-        parseCommand(command, opts, optLens, optCount);
         break;
       }
       else if (receivedChar == '|') {
@@ -237,7 +271,10 @@ void processPacket(char* topic, byte* payload, unsigned int length) {
     }
   }
 
-  if (error) {
+  if (!error) {
+    parseCommand(command, opts, optLens, optCount);
+  }
+  else {
     Serial.println("ERROR");
   }
 
