@@ -67,6 +67,67 @@ void patAlternate(byte schemeID) {
   }
 }
 
+// 1 - gradient
+// 2 - reverse gradient
+void patGradient(byte schemeID, boolean reverse=false) {
+  if (colorScheme[schemeID][0] > 1) {
+    Serial.print("  Pattern: ");
+    if (reverse) {
+      Serial.print("Reversed ");
+    }
+    Serial.print("Gradient [");
+    Serial.print(schemeID);
+    Serial.println("]");
+    
+    int offset            = 0;
+    int segmentSize       = NUM_LEDS/(colorScheme[schemeID][0]-1);
+    byte segmentRemainder = NUM_LEDS%(colorScheme[schemeID][0]-1);
+
+    for (int i=0; i<colorScheme[schemeID][0]-1; i++) {
+      // Add remainders to fill all pixels
+      int segment = segmentSize;
+      if (i<segmentRemainder){
+        segment++;
+      }
+
+      int offsetA;
+      int offsetB;
+      
+      if (!reverse){
+        offsetA = i*4;
+        offsetB = (i+1)*4;
+      }
+      else {
+        offsetA = ((colorScheme[schemeID][0]-1)-i)*4;
+        offsetB = ((colorScheme[schemeID][0]-2)-i)*4;
+      }
+
+      byte ar = colorScheme[schemeID][offsetA+1];
+      byte ag = colorScheme[schemeID][offsetA+2];
+      byte ab = colorScheme[schemeID][offsetA+3];
+      byte aw = colorScheme[schemeID][offsetA+4];
+
+      byte br = colorScheme[schemeID][offsetB+1];
+      byte bg = colorScheme[schemeID][offsetB+2];
+      byte bb = colorScheme[schemeID][offsetB+3];
+      byte bw = colorScheme[schemeID][offsetB+4];
+      
+      for (int j=0; j<segment; j++) {
+        int lowMax = segment-1;
+        
+        byte xr = map(j, 0, lowMax, ar, br);
+        byte xg = map(j, 0, lowMax, ag, bg);
+        byte xb = map(j, 0, lowMax, ab, bb);
+        byte xw = map(j, 0, lowMax, aw, bw);
+        
+        setPixelBuffer(j+offset, xr, xg, xb, xw);
+      }
+      offset = offset + segment;
+    }
+    writePixelBuffer();
+  }
+}
+
 //******//
 // Core //
 //******//
@@ -206,6 +267,13 @@ void parseCommand(char command[],char opts[][4],int optLens[], int optCount) {
       switch (optStrs[0].toInt()) {
         case 0:
           patAlternate(optStrs[1].toInt());
+          break;
+        case 1:
+          patGradient(optStrs[1].toInt());
+          break;
+        case 2:
+          patGradient(optStrs[1].toInt(), true);
+          break;
       }
     }
   }
