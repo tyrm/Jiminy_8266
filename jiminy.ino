@@ -128,6 +128,47 @@ void patGradient(byte schemeID, boolean reverse=false) {
   }
 }
 
+// 3 - filled segments
+// 4 - filled segments
+void patFilledSegments(byte schemeID, boolean reverse=false) {
+  if (colorScheme[schemeID][0] > 1) {
+    Serial.print("  Pattern: ");
+    if (reverse) {
+      Serial.print("Reversed ");
+    }
+    Serial.print("Gradient [");
+    Serial.print(schemeID);
+    Serial.println("]");
+    
+    int offset            = 0;
+    int segmentSize       = NUM_LEDS/colorScheme[schemeID][0];
+    byte segmentRemainder = NUM_LEDS%colorScheme[schemeID][0];
+
+    for (int i=0; i<colorScheme[schemeID][0]; i++) {
+      // Add remainders to fill all pixels
+      int segment = segmentSize;
+      if (i<segmentRemainder){
+        segment++;
+      }
+
+      int colorOffset;
+      
+      if (!reverse){
+        colorOffset = i*4;
+      }
+      else {
+        colorOffset = ((colorScheme[schemeID][0]-1)-i)*4;
+      }
+      
+      for (int j=0; j<segment; j++) {
+        setPixelBuffer(j+offset, colorScheme[schemeID][colorOffset+1], colorScheme[schemeID][colorOffset+2], colorScheme[schemeID][colorOffset+3], colorScheme[schemeID][colorOffset+4]);
+      }
+      offset = offset + segment;
+    }
+    writePixelBuffer();
+  }
+}
+
 //******//
 // Core //
 //******//
@@ -273,6 +314,12 @@ void parseCommand(char command[],char opts[][4],int optLens[], int optCount) {
           break;
         case 2:
           patGradient(optStrs[1].toInt(), true);
+          break;
+        case 3:
+          patFilledSegments(optStrs[1].toInt());
+          break;
+        case 4:
+          patFilledSegments(optStrs[1].toInt(), true);
           break;
       }
     }
