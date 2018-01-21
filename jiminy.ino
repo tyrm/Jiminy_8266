@@ -221,7 +221,7 @@ String getName() {
   byte mac[6];
   WiFi.macAddress(mac);
 
-  return String(String(mac[5], HEX) + String(mac[4], HEX) + String(mac[3], HEX) + String(mac[2], HEX) + String(mac[1], HEX) + String(mac[0], HEX));
+  return String(formatHex8(mac[5]) + formatHex8(mac[4]) + formatHex8(mac[3]) + formatHex8(mac[2]) + formatHex8(mac[1]) + formatHex8(mac[0]));
 }
 
 void parseCommand(char command[],char opts[][4],int optLens[], int optCount) {
@@ -447,3 +447,10 @@ void toggleLED() {
   }
 }
 
+String formatHex8(char data) {
+  String value = "";
+  if (data<0x10) {value = value + "0";} 
+  value = value + String(data, HEX);
+
+  return value;
+}
