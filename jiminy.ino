@@ -12,8 +12,19 @@ PubSubClient client(espClient);
 
 // LED Config
 #define PIN        15
-#define NUM_LEDS   7
-#define BRIGHTNESS 50
+#define BRIGHTNESS 100
+
+// Gold Box
+//#define NUM_LEDS   70
+
+// Spice Box
+//#define NUM_LEDS   46
+
+// Glass Table
+//#define NUM_LEDS   54
+
+// Glass Ikea
+#define NUM_LEDS   38
 
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM_LEDS, PIN, NEO_GRBW + NEO_KHZ800);
 
@@ -32,8 +43,12 @@ String            myName              = "";
 void initPixels() {
   pixels.setBrightness(BRIGHTNESS);
   pixels.begin();
+  for (byte i=0; i<NUM_LEDS; i++) {
+    setPixelBuffer(i, 0, 0, 0, 255);
+  }
   pixels.show(); // ball pixels to 'off'
 }
+
 
 void setPixelBrightness(byte b) {
   pixels.setBrightness(b);
@@ -188,6 +203,9 @@ void setup() {
     toggleLED();
     delay(1000);
   }
+
+  // connect to wifi 
+  setupWifi();
   
   myName = getName();
 
@@ -411,8 +429,13 @@ void reconnect() {
   // Loop until we're reconnected
   while (!client.connected()) {
     Serial.print("Attempting MQTT connection...");
+    
+    int bufferSize = myName.length() + 1;
+    char nameBuffer[bufferSize];
+    myName.toCharArray(nameBuffer, bufferSize);
+    
     // Attempt to connect
-    if (client.connect("ESP8266 Client")) {
+    if (client.connect(nameBuffer)) {
       Serial.println("connected");
        // ... and subscribe to topic
        client.subscribe("/jiminy/c/all");
@@ -434,6 +457,27 @@ void reconnect() {
 
   // Let server know we're here
   pong();
+}
+
+void setupWifi() {
+
+  delay(10);
+  // We start by connecting to a WiFi network
+  Serial.println();
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
 }
 
 void toggleLED() {
