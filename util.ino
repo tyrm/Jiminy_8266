@@ -1,9 +1,24 @@
+#define LED_PIN   0
+
 String FormatHex8(uint8_t data) {
   String value = "";
   if (data<0x10) {value = value + "0";} 
   value = value + String(data, HEX);
 
   return value;
+}
+
+void ToggleLED() {
+  static boolean ledState = false;
+  
+  if (ledState) {
+    digitalWrite(LED_PIN, HIGH);
+    ledState = false;
+  }
+  else {
+    digitalWrite(LED_PIN, LOW);
+    ledState = true;
+  }
 }
 
 void VerifyBreakChar(uint16_t location) {
