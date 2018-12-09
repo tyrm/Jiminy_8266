@@ -5,18 +5,11 @@
 // Globals
 uint16_t LEDCount;
 
-uint8_t Red;
-uint8_t Blue;
-uint8_t Green;
-uint8_t White;
-
-uint8_t Brightness;
-
 // Hardware Bits
 ESP8266WiFiMulti WMulti;
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   while (!Serial) {}
   
   EEPROM.begin(512);
@@ -51,24 +44,21 @@ void setup() {
   Serial.println(LEDCount, DEC);
 
   // Colors
-  Red = EEPROM.read(6);
-  Green = EEPROM.read(7);
-  Blue = EEPROM.read(8);
-  White = EEPROM.read(9);
-  Brightness = EEPROM.read(10);
+  uint8_t r_red = EEPROM.read(6);
+  uint8_t r_green = EEPROM.read(7);
+  uint8_t r_blue = EEPROM.read(8);
+  uint8_t r_white = EEPROM.read(9);
+  uint8_t r_brightness = EEPROM.read(10);
   
   Serial.print(" Starting Color: #");
-  Serial.print(FormatHex8(Red));
-  Serial.print(FormatHex8(Green));
-  Serial.print(FormatHex8(Blue));
-  Serial.println(FormatHex8(White));
+  Serial.print(FormatHex8(r_red));
+  Serial.print(FormatHex8(r_green));
+  Serial.print(FormatHex8(r_blue));
+  Serial.println(FormatHex8(r_white));
   
   Serial.print(" Starting Brightness: ");
-  Serial.println(Brightness, DEC);
+  Serial.println(r_brightness, DEC);
   
-  // Wifi
-  WiFi.mode(WIFI_STA);
-
   VerifyBreakChar(ee_cursor);
   ee_cursor++;
   
@@ -110,24 +100,10 @@ void setup() {
     
     VerifyBreakChar(ee_cursor);
     ee_cursor++;
-    
-    //Serial.print("  SSID[");
-    //Serial.print(r_ssid);
-    //Serial.print("] Password[");
-    //Serial.print(r_password);
-    //Serial.println("]");
 
     WMulti.addAP(r_ssid, r_password);
   }
   
-  Serial.print(" Connecting Wifi");
-  while (WMulti.run() != WL_CONNECTED) {
-    Serial.print(".");
-    delay(500);
-  }
-  Serial.println("\n WiFi connected");
-  Serial.print(" IP address: ");
-  Serial.println(WiFi.localIP());
 
   // MQTT Server Config
   // Host
@@ -188,9 +164,22 @@ void setup() {
   Serial.print("/");
   Serial.println(MQTTPassword);
 
-  Serial.println("Successfully Read Config...");
+  Serial.println("Successfully Read Config...\n");
   EEPROM.end();
 
+  InitPixels(LEDCount, r_red, r_green, r_blue, r_white, r_brightness);
+
+  // Wifi
+  WiFi.mode(WIFI_STA);
+  
+  Serial.print("Connecting Wifi");
+  while (WMulti.run() != WL_CONNECTED) {
+    Serial.print(".");
+    delay(500);
+  }
+  Serial.println("\nWiFi connected");
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
 }
 
 void loop() {
