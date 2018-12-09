@@ -1,5 +1,5 @@
 # Jiminy_8226
-Multipurpose MQTT LED Controller
+Multipurpose MQTT LED Controller. Now with EEPROM config.
 
 ## Packet Format
 ```

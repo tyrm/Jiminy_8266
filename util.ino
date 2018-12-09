@@ -1,5 +1,18 @@
 #define LED_PIN   0
 
+int CountPipes(byte* payload, unsigned int length) {
+  int count = 0;
+  
+  for (int i=0; i<length; i++) {
+    char receivedChar = (char)payload[i];
+    if (receivedChar == '|') {
+      count += 1;
+    }
+  }
+  
+  return count;
+}
+
 String FormatHex8(uint8_t data) {
   String value = "";
   if (data<0x10) {value = value + "0";} 

@@ -22,6 +22,7 @@ void setup() {
   while (!Serial) {}
   
   ReadConfig();
+  InitColorSchemes();
 
   // Wifi
   WiFi.mode(WIFI_STA);
@@ -38,7 +39,7 @@ void setup() {
   MyName = GetName();
   
   MQTTClient.setServer(MQTTHost, MQTTPort);
-  //MQTTClient.setCallback(processPacket);
+  MQTTClient.setCallback(MQTTProcessPacket);
 }
 
 void loop() {
