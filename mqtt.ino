@@ -7,7 +7,7 @@ void MQTTLoop() {
 }
 
 void MQTTPong() {
-  String message = String("<PONG|" + MyName + "|" + LEDCount + "|" + WiFi.localIP() + ">");
+  String message = String("<PONG|" + MyName + "|" + LEDCount + "|" + IpAddress2String(WiFi.localIP()) + ">");
 
   int bufferSize = message.length() + 1;
   char msgBuffer[bufferSize];
@@ -32,11 +32,7 @@ void MQTTReconnect() {
     char passwordBuffer[bufferSize];
     MQTTPassword.toCharArray(passwordBuffer, bufferSize);
     
-    Serial.print("Attempting MQTT connection [");
-    Serial.print(usernameBuffer);
-    Serial.print("/");
-    Serial.print(passwordBuffer);
-    Serial.print("] ...");
+    Serial.print("Attempting MQTT connection ...");
     
     // Attempt to connect
     if (MQTTClient.connect(nameBuffer, usernameBuffer, passwordBuffer)) {

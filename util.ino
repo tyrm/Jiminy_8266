@@ -15,6 +15,13 @@ String GetName() {
   return String(FormatHex8(mac[5]) + FormatHex8(mac[4]) + FormatHex8(mac[3]) + FormatHex8(mac[2]) + FormatHex8(mac[1]) + FormatHex8(mac[0]));
 }
 
+String IpAddress2String(const IPAddress& ipAddress) {
+  return String(ipAddress[0]) + String(".") +\
+  String(ipAddress[1]) + String(".") +\
+  String(ipAddress[2]) + String(".") +\
+  String(ipAddress[3])  ; 
+}
+
 void ReadConfig() {
     EEPROM.begin(512);
   

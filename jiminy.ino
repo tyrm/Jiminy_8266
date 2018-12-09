@@ -4,13 +4,13 @@
 #include <PubSubClient.h>
 
 // Globals
-byte     ColorScheme[10][41];
-uint16_t LEDCount;
-String   MyName;
+byte      ColorScheme[10][41];
+uint16_t  LEDCount;
 IPAddress MQTTHost;
-uint16_t MQTTPort;
-String   MQTTUsername;
-String   MQTTPassword;
+uint16_t  MQTTPort;
+String    MQTTUsername;
+String    MQTTPassword;
+String    MyName;
 
 // Hardware Bits
 ESP8266WiFiMulti WMulti;
