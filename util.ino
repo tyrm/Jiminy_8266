@@ -108,22 +108,6 @@ void ReadConfig() {
     WMulti.addAP(r_ssid, r_password);
   }
   
-
-  // MQTT Server Config
-  // Host
-  ee_len = EEPROM.read(ee_cursor);
-  ee_cursor++;
-  
-  char r_host[ee_len];
-  for (int i = 0; i < ee_len; i++) {
-    r_host[i] = char(EEPROM.read(ee_cursor));
-    ee_cursor++;
-  }
-  MQTTHost = r_host;
-  
-  VerifyBreakChar(ee_cursor);
-  ee_cursor++;
-  
   // Username
   ee_len = EEPROM.read(ee_cursor);
   ee_cursor++;
@@ -152,9 +136,17 @@ void ReadConfig() {
   VerifyBreakChar(ee_cursor);
   ee_cursor++;
 
-  // [11-12] mqtt_port
-  low = EEPROM.read(11);
-  high = EEPROM.read(12);
+  // [11-14] mqtt_server_ip
+  uint8_t IP1 = EEPROM.read(11);
+  uint8_t IP2 = EEPROM.read(12);
+  uint8_t IP3 = EEPROM.read(13);
+  uint8_t IP4 = EEPROM.read(14);
+
+  MQTTHost = IPAddress(IP1, IP2, IP3, IP4);
+
+  // [15-16] mqtt_port
+  low = EEPROM.read(15);
+  high = EEPROM.read(16);
   uint8_t mqtt_port_bytes[] = {low, high};
   MQTTPort = *( uint16_t* ) mqtt_port_bytes;
   

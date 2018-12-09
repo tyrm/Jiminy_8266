@@ -7,7 +7,7 @@
 byte     ColorScheme[10][41];
 uint16_t LEDCount;
 String   MyName;
-String   MQTTHost;
+IPAddress MQTTHost;
 uint16_t MQTTPort;
 String   MQTTUsername;
 String   MQTTPassword;
@@ -36,16 +36,8 @@ void setup() {
   Serial.println(WiFi.localIP());
 
   MyName = GetName();
-
-  // MQTT
-  int bufferSize = MQTTHost.length() + 1;
-  char hostBuffer[bufferSize];
-  MQTTHost.toCharArray(hostBuffer, bufferSize);
   
-  Serial.print("Connecting to: ");
-  Serial.println(hostBuffer);
-  
-  MQTTClient.setServer("MQTTHost", MQTTPort);
+  MQTTClient.setServer(MQTTHost, MQTTPort);
   //MQTTClient.setCallback(processPacket);
 }
 

@@ -14,8 +14,13 @@ const uint8_t StartBlue = 0;
 const uint8_t StartWhite = 255;
 // [10]   start brigtness
 const uint8_t StartBrightness = 100;
-// [11-12] mqtt_port
-const uint16_t MQTTPort = 8883;
+// [11-14] mqtt_server_ip
+const uint8_t IP1 = 192;
+const uint8_t IP2 = 168;
+const uint8_t IP3 = 1;
+const uint8_t IP4 = 100;
+// [15-16] mqtt_port
+const uint16_t MQTTPort = 1883;
 
 // Dynamic Sized Data
 // wifi password pairs
@@ -25,16 +30,15 @@ char *wifi[][2] = {
   {"ssid3","P@55w0rd!E"}
 };
 // mqtt_server
-const char     mqtt_server[]  = "mqtt.broker.com";
 const char     mqtt_username[]  = "jiminy";
 const char     mqtt_password[]  = "password";
 
 const char     break_char = 0x1D;
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   while (!Serial) {}
-  
+
   EEPROM.begin(512);
 
   // Write Header
@@ -46,7 +50,7 @@ void setup() {
   Serial.print(".");
   EEPROM.write(3, 0x01); // Version 1
   Serial.print(".");
-  
+
   // Write LED Count
   EEPROM.write(4, lowByte(LEDCount));
   Serial.print(".");
@@ -64,11 +68,21 @@ void setup() {
   Serial.print(".");
   EEPROM.write(10, StartBrightness);
   Serial.print(".");
-  
-  // Write MQTT
-  EEPROM.write(11, lowByte(MQTTPort));
+
+  // Write IP
+  EEPROM.write(11, IP1);
   Serial.print(".");
-  EEPROM.write(12, highByte(MQTTPort));
+  EEPROM.write(12, IP2);
+  Serial.print(".");
+  EEPROM.write(13, IP3);
+  Serial.print(".");
+  EEPROM.write(14, IP4);
+  Serial.print(".");
+
+  // Write MQTT
+  EEPROM.write(15, lowByte(MQTTPort));
+  Serial.print(".");
+  EEPROM.write(16, highByte(MQTTPort));
   Serial.print(".");
 
    // ** Write Variables with Dynamic Locations**
@@ -82,17 +96,13 @@ void setup() {
 
   // Write Wifi Count
   uint8_t wifi_count = sizeof(wifi)/sizeof(wifi[0]);
-  Serial.print("Found ");
-  Serial.print(wifi_count, DEC);
-  Serial.println(" set(s) of wifi credentials");
-
   EEPROM.write(ee_cursor, wifi_count);
   ee_cursor++;
   Serial.print(".");
   EEPROM.write(ee_cursor, break_char);
   ee_cursor++;
   Serial.print(".");
-  
+
   for (int i = 0; i < wifi_count; i++) {
 
     String ssid = wifi[i][0];
@@ -104,7 +114,7 @@ void setup() {
       ee_cursor++;
       Serial.print(".");
     }
-    
+
     EEPROM.write(ee_cursor, break_char);
     ee_cursor++;
     Serial.print(".");
@@ -118,28 +128,12 @@ void setup() {
       ee_cursor++;
       Serial.print(".");
     }
-    
+
     EEPROM.write(ee_cursor, break_char);
     ee_cursor++;
     Serial.print(".");
   }
-  
-  // Write server hostname
-  ee_len = sizeof(mqtt_server);
-  EEPROM.write(ee_cursor, ee_len);
-  ee_cursor++;
-  Serial.print(".");
 
-  for (int i = 0; i < ee_len; i++) {
-    EEPROM.write(ee_cursor, mqtt_server[i]);
-    ee_cursor++;
-    Serial.print(".");
-  }
-  
-  EEPROM.write(ee_cursor, break_char);
-  ee_cursor++;
-  Serial.print(".");
-  
   // Write server username
   ee_len = sizeof(mqtt_username);
   EEPROM.write(ee_cursor, ee_len);
@@ -151,11 +145,11 @@ void setup() {
     ee_cursor++;
     Serial.print(".");
   }
-  
+
   EEPROM.write(ee_cursor, break_char);
   ee_cursor++;
   Serial.print(".");
-  
+
   // Write server password
   ee_len = sizeof(mqtt_password);
   EEPROM.write(ee_cursor, ee_len);
@@ -167,7 +161,7 @@ void setup() {
     ee_cursor++;
     Serial.print(".");
   }
-  
+
   EEPROM.write(ee_cursor, break_char);
   ee_cursor++;
   Serial.print(".");
@@ -178,7 +172,7 @@ void setup() {
   Serial.print("Done writing data to EEPROM at ");
   Serial.println(ee_cursor, DEC);
   delay(1000);
-  
+
 }
 
 void loop() {
