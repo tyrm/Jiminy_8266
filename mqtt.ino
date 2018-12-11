@@ -38,6 +38,8 @@ void MQTTParseCommand(char command[],char opts[][4],int optLens[], int optCount)
   }
   else if (commandStr == "SETP") {
     if (optCount >= 5 && optCount % 4 == 1) { // check length
+      MyMode = 0;
+      
       int pixCount = optCount/4;
       Serial.print("  Got color+white data for ");
       Serial.print(pixCount);
@@ -51,6 +53,8 @@ void MQTTParseCommand(char command[],char opts[][4],int optLens[], int optCount)
   }
   else if (commandStr == "SETA") {
     if (optCount == 4) { // check length
+      MyMode = 0;
+      
       Serial.println("  Got color+white data for all pixels.");
       for (byte i=0; i<LEDCount; i++) {
         SetPixelBuffer(i, optStrs[0].toInt(), optStrs[1].toInt(), optStrs[2].toInt(), optStrs[3].toInt());
@@ -88,6 +92,8 @@ void MQTTParseCommand(char command[],char opts[][4],int optLens[], int optCount)
   }
   else if (commandStr == "PATS") {
     if (optCount == 2) { // check length
+      MyMode = 0;
+      
       switch (optStrs[0].toInt()) {
         case 0:
           PatAlternate(optStrs[1].toInt());

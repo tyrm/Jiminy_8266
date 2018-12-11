@@ -12,6 +12,12 @@ String    MQTTUsername;
 String    MQTTPassword;
 String    MyName;
 
+unsigned long LastRun = 0;
+int  MyDelay = 100;
+byte MyMode = 0;
+// 0 - Static No Animation
+// 1 - Fire
+
 // Hardware Bits
 ESP8266WiFiMulti WMulti;
 WiFiClient       ESPClient;
@@ -48,5 +54,5 @@ void loop() {
     delay(1000);
   }
   MQTTLoop();
-
+  AniLoop();
 }
