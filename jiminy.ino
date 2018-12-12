@@ -3,6 +3,8 @@
 #include <ESP8266WiFiMulti.h>
 #include <PubSubClient.h>
 
+#define MAX_LEDS 255
+
 // Globals
 byte      ColorScheme[10][41];
 uint16_t  LEDCount;
@@ -17,6 +19,7 @@ int  MyDelay = 100;
 byte MyMode = 0;
 // 0 - Static No Animation
 // 1 - Fire
+// 2 - Sparkle
 
 // Hardware Bits
 ESP8266WiFiMulti WMulti;
@@ -25,7 +28,6 @@ PubSubClient     MQTTClient(ESPClient);
 
 void setup() {
   Serial.begin(115200);
-  while (!Serial) {}
   
   ReadConfig();
   InitColorSchemes();

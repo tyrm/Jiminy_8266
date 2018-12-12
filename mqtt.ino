@@ -113,6 +113,16 @@ void MQTTParseCommand(char command[],char opts[][4],int optLens[], int optCount)
       }
     }
   }
+  else if (commandStr == "ANIM") {
+    switch (optStrs[0].toInt()) {
+      case 1:
+        MyMode = 1;
+        break;
+      case 2:
+        MyMode = 2;
+        break;
+    }
+  }
 }
 
 void MQTTPong() {
